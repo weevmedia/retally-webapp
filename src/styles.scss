@@ -1,0 +1,36 @@
+@use '@angular/material' as mat;
+
+/* ReTally design tokens — same palette as the mobile app (ReTallyPalette.kt). */
+:root {
+  --rt-primary: #10b981;
+  --rt-primary-dark: #047857;
+  --rt-primary-tint: #d1fae5;
+  --rt-surface: #ffffff;
+  --rt-background: #edeff1;
+  --rt-ink: #111827;
+  --rt-muted: #6b7280;
+  --rt-warning: #d97706;
+  --rt-danger: #ef4444;
+  --rt-divider: #e5e7eb;
+  --rt-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  color-scheme: light;
+  @include mat.theme((
+    color: (primary: mat.$green-palette, tertiary: mat.$cyan-palette, theme-type: light),
+    typography: Inter,
+    density: 0,
+  ));
+  @include mat.button-overrides((filled-container-color: var(--rt-primary), filled-label-text-color: #fff));
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--rt-background);
+  color: var(--rt-ink);
+  font-family: Inter, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.mat-mdc-table { background: transparent; }
+.toast-success { --mat-snack-bar-container-color: var(--rt-primary-dark); }
+.toast-error { --mat-snack-bar-container-color: #991b1b; }

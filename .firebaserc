@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "retally-c5212"
+  },
+  "targets": {
+    "retally-c5212": {
+      "hosting": {
+        "admin": ["retally-admin"]
+      }
+    }
+  }
+}
