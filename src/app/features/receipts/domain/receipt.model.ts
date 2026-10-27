@@ -132,6 +132,8 @@ export interface LineItem {
   discount?: number;
   isDuplicate?: boolean;
   userCorrected?: boolean;
+  /** The shopper picked [category] by hand in the app (AI never changes it). */
+  categoryCorrected?: boolean;
   [key: string]: unknown;
 }
 

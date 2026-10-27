@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Store, compareForReview } from './store.model';
 
 const s = (key: string, status: Store['status'], receiptCount: number | null): Store => ({
-  key, name: key, iconUrl: '', aliases: [], category: null, status, receiptCount, lastSeenAt: null, updatedAt: null, updatedBy: null,
+  key, name: key, iconUrl: '', weeklyAdUrl: '', aliases: [], category: null, status, receiptCount, lastSeenAt: null, updatedAt: null, updatedBy: null,
 });
 
 describe('compareForReview', () => {

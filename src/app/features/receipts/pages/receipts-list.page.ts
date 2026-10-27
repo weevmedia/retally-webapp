@@ -27,6 +27,7 @@ import {
 import { ReceiptsStore } from '../state/receipts.store';
 import { ReceiptRepository } from '../data-access/receipt.repository';
 import { ReceiptDetailData, ReceiptDetailDialogComponent, ReceiptDetailResult } from '../components/receipt-detail.dialog';
+import { StoreLogoComponent } from '@shared/stores/store-logo.component';
 
 const KNOWN_SOURCES = ['scan', 'manual', 'import'];
 const KNOWN_PAYMENTS = ['card', 'cash', 'mobile', 'unknown'];
@@ -44,6 +45,7 @@ interface Chip {
     CurrencyPipe, DecimalPipe, ReactiveFormsModule, MatTableModule, MatSortModule, MatPaginatorModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatChipsModule, MatButtonModule,
     MatIconModule, MatTooltipModule, MatProgressBarModule, MatBadgeModule, PageHeaderComponent, EmptyStateComponent,
+    StoreLogoComponent,
   ],
   template: `
     <app-page-header title="Receipts" subtitle="Every receipt synced by signed-in users. Read-only.">
@@ -231,7 +233,10 @@ interface Chip {
             <ng-container matColumnDef="store">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Store</th>
               <td mat-cell *matCellDef="let r">
-                <strong>{{ r.storeName || '—' }}</strong>
+                <span class="store-cell">
+                  <app-store-logo [name]="r.storeName" [size]="28" />
+                  <strong>{{ r.storeName || '—' }}</strong>
+                </span>
                 @if (r.deleted) { <span class="pill danger">Deleted</span> }
               </td>
             </ng-container>
@@ -277,6 +282,7 @@ interface Chip {
     </div>
   `,
   styles: `
+    .store-cell { display: inline-flex; align-items: center; gap: 10px; }
     .card { background: var(--rt-surface); border-radius: 16px; box-shadow: var(--rt-shadow); padding: 16px; }
     .filters { margin-bottom: 16px; }
     .filter-row { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }

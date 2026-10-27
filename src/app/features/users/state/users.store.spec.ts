@@ -7,7 +7,7 @@ import { UsersStore } from './users.store';
 
 const u = (over: Partial<AppUser>): AppUser => ({
   uid: 'x', email: null, displayName: null, photoUrl: null, providers: ['google.com'], anonymous: false, disabled: false,
-  isAdmin: false, emailVerified: true, createdAt: null, lastSignInAt: null, lastActiveAt: null, receiptCount: 5, lastReceiptAt: null,
+  isAdmin: false, emailVerified: true, createdAt: null, lastSignInAt: null, lastActiveAt: null, receiptCount: 5, lastReceiptAt: null, devices: [],
   ...over,
 });
 

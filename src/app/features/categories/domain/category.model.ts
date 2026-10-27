@@ -2,7 +2,9 @@
  * Item categories — the list in Firestore `config/itemCategories` that the app auto-tags
  * receipt line items with (served by the `getCategories` function).
  *
- * Order matters: the FIRST category is the app's default, where items matching no keyword land.
+ * The phone tags each item instantly with the first category whose keyword matches (so order
+ * matters for keyword matches); anything unmatched is "Uncategorized" until the server's AI
+ * (`categorizeItems`) places it in one of the BUILT-IN categories below.
  * `id` is what receipts store (`lineItems.category`, `categoryTotals`), so it never changes once
  * created; `name` is just the label.
  */
@@ -20,11 +22,37 @@ export interface CategoryList {
   isDefault: boolean;
 }
 
-/** What `getCategories` returns when the doc is missing — keep in sync with the backend. */
+/**
+ * The AI's categories — keep in sync with `AI_CATEGORIES` in functions/src/categories. The AI
+ * returns these ids, so they can be renamed and given keywords but never deleted (the server
+ * adds any missing one back). Also what `getCategories` returns when the doc is missing.
+ */
 export const DEFAULT_CATEGORIES: readonly ItemCategory[] = [
   { id: 'grocery', name: 'Grocery', keywords: [] },
-  { id: 'misc', name: 'Miscellaneous', keywords: [] },
+  { id: 'household', name: 'Household', keywords: [] },
+  { id: 'personal_care', name: 'Personal care', keywords: [] },
+  { id: 'health', name: 'Health & pharmacy', keywords: [] },
+  { id: 'baby', name: 'Baby', keywords: [] },
+  { id: 'pet', name: 'Pet', keywords: [] },
+  { id: 'alcohol', name: 'Alcohol', keywords: [] },
+  { id: 'electronics', name: 'Electronics', keywords: [] },
+  { id: 'clothing', name: 'Clothing', keywords: [] },
+  { id: 'home', name: 'Home & garden', keywords: [] },
+  { id: 'other', name: 'Other', keywords: [] },
+  { id: 'uncategorized', name: 'Uncategorized', keywords: [] },
 ];
+
+export const BUILT_IN_IDS: ReadonlySet<string> = new Set(DEFAULT_CATEGORIES.map((c) => c.id));
+
+export function isBuiltIn(id: string): boolean {
+  return BUILT_IN_IDS.has(id);
+}
+
+/** [list] plus any built-in category it lacks (the server serves them anyway). */
+export function withBuiltIns(list: readonly ItemCategory[]): ItemCategory[] {
+  const have = new Set(list.map((c) => c.id));
+  return [...list, ...DEFAULT_CATEGORIES.filter((c) => !have.has(c.id)).map((c) => ({ ...c, keywords: [] }))];
+}
 
 export const MAX_CATEGORIES = 50;
 export const MAX_KEYWORDS = 200;

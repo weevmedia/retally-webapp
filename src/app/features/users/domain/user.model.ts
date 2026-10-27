@@ -15,6 +15,32 @@ export interface AppUser {
   lastActiveAt: string | null;
   receiptCount: number | null;
   lastReceiptAt: string | null;
+  /** App installs, newest activity first (empty until the app reports one). */
+  devices: UserDevice[];
+}
+
+/** One app install, from `users/{uid}/devices/{installationId}`. */
+export interface UserDevice {
+  installationId: string;
+  platform: string;
+  model: string;
+  osVersion: string;
+  appVersion: string;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+}
+
+/** "Android 15" / "iOS 18.1". */
+export function osLabel(d: Pick<UserDevice, 'platform' | 'osVersion'>): string {
+  const name = d.platform === 'ios' ? 'iOS' : d.platform === 'android' ? 'Android' : d.platform;
+  return d.osVersion ? `${name} ${d.osVersion}` : name;
+}
+
+/** Per-platform counts for the table cell, e.g. [{ platform: 'android', count: 2 }]. */
+export function deviceCounts(devices: readonly UserDevice[]): { platform: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const d of devices) counts.set(d.platform, (counts.get(d.platform) ?? 0) + 1);
+  return [...counts.entries()].map(([platform, count]) => ({ platform, count }));
 }
 
 export type UserTab = 'app' | 'admin';

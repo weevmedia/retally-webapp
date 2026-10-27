@@ -113,8 +113,8 @@ export class UsersStore {
     this._users.update((list) => {
       const i = list.findIndex((u) => u.uid === user.uid);
       if (i < 0) return [...list, user];
-      // Keep receipt stats from the list call (the action responses don't include them).
-      const merged = { ...user, receiptCount: list[i].receiptCount, lastReceiptAt: list[i].lastReceiptAt };
+      // Keep receipt stats and devices from the list call (the action responses don't include them).
+      const merged = { ...user, receiptCount: list[i].receiptCount, lastReceiptAt: list[i].lastReceiptAt, devices: list[i].devices };
       return list.map((u, j) => (j === i ? merged : u));
     });
   }

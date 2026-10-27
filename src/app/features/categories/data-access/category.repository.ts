@@ -4,12 +4,12 @@ import { Timestamp, doc, onSnapshot } from 'firebase/firestore';
 import { FIRESTORE } from '@core/firebase/firebase.providers';
 import { CallableApi } from '@core/api/callable';
 import { AppError } from '@core/errors/app-error';
-import { CategoryList, DEFAULT_CATEGORIES, ItemCategory } from '../domain/category.model';
+import { CategoryList, DEFAULT_CATEGORIES, ItemCategory, withBuiltIns } from '../domain/category.model';
 
 /** Port for the item-category list (one document, saved as a whole). */
 export abstract class CategoryRepository {
   abstract watch(): Observable<CategoryList>;
-  /** Replaces the whole list; order is preserved (first = default). */
+  /** Replaces the whole list; order is preserved (keyword-match priority). */
   abstract save(categories: ItemCategory[]): Promise<void>;
 }
 
@@ -46,7 +46,7 @@ function toList(data: Record<string, unknown> | null): CategoryList {
     .filter((c) => c.id && c.name);
   const ts = data?.['updatedAt'];
   return {
-    categories: categories.length ? categories : DEFAULT_CATEGORIES.map((c) => ({ ...c, keywords: [...c.keywords] })),
+    categories: categories.length ? withBuiltIns(categories) : DEFAULT_CATEGORIES.map((c) => ({ ...c, keywords: [...c.keywords] })),
     updatedAt: ts instanceof Timestamp ? ts.toDate() : null,
     updatedBy: typeof data?.['updatedBy'] === 'string' ? (data['updatedBy'] as string) : null,
     isDefault: categories.length === 0,

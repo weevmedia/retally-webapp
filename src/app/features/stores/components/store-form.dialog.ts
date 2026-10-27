@@ -66,6 +66,19 @@ export interface StoreFormData {
         </mat-form-field>
 
         <mat-form-field appearance="outline">
+          <mat-label>Weekly ad link</mat-label>
+          <input matInput formControlName="weeklyAdUrl" type="url" inputmode="url"
+                 placeholder="https://www.example.com/weekly-ad" autocomplete="off" />
+          @if (adUrl()) {
+            <a matSuffix mat-icon-button [href]="adUrl()" target="_blank" rel="noopener" aria-label="Open weekly ad">
+              <mat-icon>open_in_new</mat-icon>
+            </a>
+          }
+          <mat-hint>Opens when a user taps this store in their favourites. Leave empty for none.</mat-hint>
+          @if (form.controls.weeklyAdUrl.hasError('pattern')) { <mat-error>Use a full https:// link</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
           <mat-label>Category</mat-label>
           <mat-select formControlName="category">
             <mat-option [value]="null">None</mat-option>
@@ -125,6 +138,7 @@ export class StoreFormDialogComponent {
   protected readonly form = this.fb.nonNullable.group({
     name: [this.data.store?.name ?? '', [Validators.required, Validators.maxLength(64)]],
     category: this.fb.control<StoreCategory | null>(this.data.store?.category ?? null),
+    weeklyAdUrl: [this.data.store?.weeklyAdUrl ?? '', [Validators.pattern(/^\s*(https:\/\/\S+)?\s*$/), Validators.maxLength(2048)]],
   });
 
   protected readonly aliases = signal<string[]>(this.data.store?.aliases ?? []);
@@ -133,6 +147,12 @@ export class StoreFormDialogComponent {
 
   private readonly name = toSignal(this.form.controls.name.valueChanges, { initialValue: this.form.controls.name.value });
   private readonly status = toSignal(this.form.statusChanges, { initialValue: this.form.status });
+  private readonly adValue = toSignal(this.form.controls.weeklyAdUrl.valueChanges, { initialValue: this.form.controls.weeklyAdUrl.value });
+  /** The typed link when it's valid, for the "open" button. */
+  protected readonly adUrl = computed(() => {
+    const url = this.adValue().trim();
+    return /^https:\/\/\S+$/.test(url) ? url : '';
+  });
 
   /** New stores derive the key from the name; existing keys never change (the app matches on them). */
   protected readonly key = computed(() => (this.isNew ? storeKeyOf(this.name()) : this.data.store!.key));
@@ -168,6 +188,7 @@ export class StoreFormDialogComponent {
         category: value.category,
         aliases: normalizeAliases(this.aliases()),
         iconUrl: this.data.store?.iconUrl ?? '',
+        weeklyAdUrl: value.weeklyAdUrl.trim(),
       },
       this.isNew,
       this.logoFile(),

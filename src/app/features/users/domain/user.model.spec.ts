@@ -5,7 +5,7 @@ const now = new Date('2026-10-16T12:00:00Z').getTime();
 const base: AppUser = {
   uid: 'abcdef123', email: 'pat@example.com', displayName: null, photoUrl: null, providers: ['google.com'],
   anonymous: false, disabled: false, isAdmin: false, emailVerified: true, createdAt: '2026-01-01T00:00:00Z',
-  lastSignInAt: null, lastActiveAt: '2026-10-14T00:00:00Z', receiptCount: 3, lastReceiptAt: null,
+  lastSignInAt: null, lastActiveAt: '2026-10-14T00:00:00Z', receiptCount: 3, lastReceiptAt: null, devices: [],
 };
 const guest: AppUser = { ...base, uid: 'zzz999', email: null, providers: [], anonymous: true, lastActiveAt: '2026-05-01T00:00:00Z' };
 const off: AppUser = { ...base, uid: 'off1', email: 'off@example.com', providers: ['password'], disabled: true };

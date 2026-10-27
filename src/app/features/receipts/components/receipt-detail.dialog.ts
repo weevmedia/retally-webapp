@@ -11,6 +11,7 @@ import { AppError } from '@core/errors/app-error';
 import { NotificationService } from '@core/notifications/notification.service';
 import { ReceiptDetail, ReceiptRow, humanize, issueLabel } from '../domain/receipt.model';
 import { ReceiptRepository } from '../data-access/receipt.repository';
+import { StoreLogoComponent } from '@shared/stores/store-logo.component';
 
 export interface ReceiptDetailData {
   row: ReceiptRow;
@@ -32,11 +33,12 @@ const get = (o: unknown, path: string): unknown =>
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CurrencyPipe, DatePipe, DecimalPipe, PercentPipe, MatDialogModule, MatButtonModule, MatIconModule,
-    MatTooltipModule, MatProgressBarModule, MatExpansionModule,
+    MatTooltipModule, MatProgressBarModule, MatExpansionModule, StoreLogoComponent,
   ],
   template: `
     <div mat-dialog-title class="title">
-      <div>
+      <app-store-logo [name]="row.storeName" [size]="44" />
+      <div class="title-text">
         <div class="store">{{ row.storeName || 'Unknown store' }}</div>
         <div class="sub">
           {{ row.purchaseDateLocal }} · {{ row.total | currency: row.currency }} · {{ row.lineItemCount }} items
@@ -145,7 +147,10 @@ const get = (o: unknown, path: string): unknown =>
                       @if (li.isDuplicate) { <span class="pill warn">Duplicate</span> }
                       @if (li.userCorrected) { <span class="pill">Edited by user</span> }
                     </td>
-                    <td>{{ li.category ? humanize(li.category) : '—' }}</td>
+                    <td>
+                      {{ li.category ? humanize(li.category) : '—' }}
+                      @if (li.categoryCorrected) { <span class="pill" title="The shopper picked this category in the app">Set by user</span> }
+                    </td>
                     <td class="num">{{ li.quantity ?? 1 | number: '1.0-3' }} {{ li.unit && li.unit !== 'each' ? li.unit : '' }}</td>
                     <td class="num">{{ li.unitPrice ?? 0 | currency: row.currency }}</td>
                     <td class="num">{{ li.discount ? (li.discount | currency: row.currency) : '' }}</td>
@@ -174,6 +179,7 @@ const get = (o: unknown, path: string): unknown =>
   `,
   styles: `
     .title { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .title-text { flex: 1; min-width: 0; }
     .store { font-size: 20px; font-weight: 700; }
     .sub { font-size: 14px; color: var(--rt-muted); font-weight: 400; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .content { min-width: min(880px, 92vw); }

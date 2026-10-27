@@ -9,6 +9,8 @@ export interface Store {
   key: string;
   name: string;
   iconUrl: string;
+  /** Weekly-ad page opened when a user taps this store in their favourites ('' = none). */
+  weeklyAdUrl: string;
   aliases: string[];
   category: StoreCategory | null;
   /** `new` = created automatically from a receipt, waiting for an admin to review. */
@@ -30,7 +32,7 @@ export function compareForReview(a: Store, b: Store): number {
 }
 
 /** What the form edits; the server stamps updatedAt / updatedBy. */
-export type StoreDraft = Pick<Store, 'key' | 'name' | 'iconUrl' | 'aliases' | 'category'>;
+export type StoreDraft = Pick<Store, 'key' | 'name' | 'iconUrl' | 'weeklyAdUrl' | 'aliases' | 'category'>;
 
 export const STORE_CATEGORIES = [
   'grocery', 'warehouse', 'pharmacy', 'department', 'convenience', 'specialty', 'other',

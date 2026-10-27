@@ -2,7 +2,7 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppError } from '@core/errors/app-error';
 import { NotificationService } from '@core/notifications/notification.service';
-import { CategoryList, ItemCategory, keywordConflicts, move } from '../domain/category.model';
+import { CategoryList, ItemCategory, isBuiltIn, keywordConflicts, move } from '../domain/category.model';
 import { CategoryRepository } from '../data-access/category.repository';
 
 /**
@@ -75,6 +75,7 @@ export class CategoriesStore {
   }
 
   remove(id: string): Promise<boolean> {
+    if (isBuiltIn(id)) return Promise.resolve(false); // the AI returns it; the server would add it back
     const target = this.categories().find((c) => c.id === id);
     return this.persist(this.categories().filter((c) => c.id !== id), `${target?.name ?? id} deleted`);
   }
@@ -83,12 +84,6 @@ export class CategoriesStore {
     const list = this.categories();
     const from = list.findIndex((c) => c.id === id);
     return this.persist(move(list, from, from + delta), 'Order saved');
-  }
-
-  makeDefault(id: string): Promise<boolean> {
-    const list = this.categories();
-    const from = list.findIndex((c) => c.id === id);
-    return this.persist(move(list, from, 0), `${list[from]?.name} is now the default`);
   }
 
   private async persist(next: ItemCategory[], successMessage: string): Promise<boolean> {

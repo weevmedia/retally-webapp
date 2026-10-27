@@ -21,10 +21,11 @@ import { PageHeaderComponent } from '@shared/ui/page-header.component';
 import { EmptyStateComponent } from '@shared/ui/empty-state.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '@shared/ui/confirm-dialog.component';
 import {
-  ActivityFilter, AppUser, SIGN_IN_OPTIONS, SignInFilter, StatusFilter, UserTab, providerLabels, userLabel,
+  ActivityFilter, AppUser, SIGN_IN_OPTIONS, SignInFilter, StatusFilter, UserTab, deviceCounts, providerLabels, userLabel,
 } from '../domain/user.model';
 import { UsersStore } from '../state/users.store';
 import { InviteAdminDialogComponent } from '../components/invite-admin.dialog';
+import { UserDevicesDialogComponent } from '../components/user-devices.dialog';
 
 /** App users and admins: search, filter, enable / disable, grant / revoke admin. */
 @Component({
@@ -132,6 +133,18 @@ import { InviteAdminDialogComponent } from '../components/invite-admin.dialog';
                 }
               </td>
             </ng-container>
+            <ng-container matColumnDef="devices">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Devices</th>
+              <td mat-cell *matCellDef="let u">
+                @if (u.devices.length) {
+                  <button class="devices" (click)="showDevices(u)" [matTooltip]="u.devices[0].model + ' · last used'">
+                    @for (c of counts(u.devices); track c.platform) {
+                      <span class="dev"><mat-icon>{{ c.platform === 'ios' ? 'phone_iphone' : 'phone_android' }}</mat-icon>{{ c.count }}</span>
+                    }
+                  </button>
+                } @else { <span class="muted">—</span> }
+              </td>
+            </ng-container>
             <ng-container matColumnDef="createdAt">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Joined</th>
               <td mat-cell *matCellDef="let u" class="nowrap">{{ u.createdAt ? (u.createdAt | date: 'mediumDate') : '—' }}</td>
@@ -164,6 +177,7 @@ import { InviteAdminDialogComponent } from '../components/invite-admin.dialog';
                   } @else if (!u.anonymous) {
                     <button mat-menu-item (click)="confirmGrant(u)"><mat-icon>admin_panel_settings</mat-icon> Make admin</button>
                   }
+                  <button mat-menu-item (click)="showDevices(u)"><mat-icon>devices</mat-icon> View devices</button>
                   <button mat-menu-item (click)="copy(u.uid)"><mat-icon>content_copy</mat-icon> Copy user ID</button>
                 </mat-menu>
               </td>
@@ -204,6 +218,10 @@ import { InviteAdminDialogComponent } from '../components/invite-admin.dialog';
     .num { text-align: right; }
     .nowrap { white-space: nowrap; }
     .muted { color: var(--rt-muted); }
+    .devices { all: unset; cursor: pointer; display: inline-flex; gap: 10px; }
+    .devices:hover .dev { color: var(--rt-primary); }
+    .dev { display: inline-flex; align-items: center; gap: 2px; font-weight: 600; }
+    .dev mat-icon { font-size: 18px; width: 18px; height: 18px; }
     .actions { text-align: right; width: 48px; }
     .user-row.off td { opacity: .55; }
     .user-row.off td.actions, .user-row.off td:has(mat-slide-toggle) { opacity: 1; }
@@ -238,6 +256,7 @@ export class UsersListPage {
       switch (col) {
         case 'user': return userLabel(u).toLowerCase();
         case 'receipts': return u.receiptCount ?? -1;
+        case 'devices': return u.devices.length;
         case 'createdAt': return u.createdAt ?? '';
         case 'lastActiveAt': return u.lastActiveAt ?? '';
         case 'status': return u.disabled ? 1 : 0;
@@ -249,7 +268,7 @@ export class UsersListPage {
   protected columns(): string[] {
     return this.state.tab() === 'admin'
       ? ['user', 'signIn', 'createdAt', 'lastActiveAt', 'status', 'actions']
-      : ['user', 'signIn', 'receipts', 'createdAt', 'lastActiveAt', 'status', 'actions'];
+      : ['user', 'signIn', 'receipts', 'devices', 'createdAt', 'lastActiveAt', 'status', 'actions'];
   }
 
   protected setTab(index: number): void {
@@ -307,6 +326,12 @@ export class UsersListPage {
       confirmLabel: 'Remove access',
       destructive: true,
     }).subscribe((ok) => ok && void this.state.setAdmin(u, false));
+  }
+
+  protected readonly counts = deviceCounts;
+
+  protected showDevices(u: AppUser): void {
+    this.dialog.open(UserDevicesDialogComponent, { data: u, autoFocus: false, maxWidth: '95vw' });
   }
 
   protected invite(): void {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,22 +12,23 @@ import { MatDialog } from '@angular/material/dialog';
 import { PageHeaderComponent } from '@shared/ui/page-header.component';
 import { EmptyStateComponent } from '@shared/ui/empty-state.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '@shared/ui/confirm-dialog.component';
-import { ItemCategory, MAX_CATEGORIES } from '../domain/category.model';
+import { ItemCategory, MAX_CATEGORIES, isBuiltIn } from '../domain/category.model';
 import { CategoriesStore } from '../state/categories.store';
 import { CategoryFormDialogComponent, CategoryFormData } from '../components/category-form.dialog';
 
 const PREVIEW = 14;
 
-/** Item categories master: ordered list (first = default), keywords, add / edit / reorder / delete. */
+/** Item categories master: ordered list (keyword-match priority), keywords, add / edit / reorder / delete. */
 @Component({
   selector: 'app-categories-list-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatTooltipModule,
+    DatePipe, RouterLink, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatTooltipModule,
     MatProgressBarModule, MatMenuModule, PageHeaderComponent, EmptyStateComponent,
   ],
   template: `
-    <app-page-header title="Categories" subtitle="Spending categories the app auto-tags receipt items with.">
+    <app-page-header title="Categories" subtitle="Spending categories for receipt items. Keywords give the phone an instant guess; the AI places everything else.">
+      <a mat-stroked-button routerLink="/categories/ai"><mat-icon>auto_awesome</mat-icon> Review AI answers</a>
       <button mat-flat-button (click)="openForm(null)" [disabled]="state.saving() || atLimit()">
         <mat-icon>add</mat-icon> Add category
       </button>
@@ -69,7 +71,9 @@ const PREVIEW = 14;
                 <div class="title">
                   <strong>{{ row.category.name }}</strong>
                   <span class="id">{{ row.category.id }}</span>
-                  @if (row.index === 0) { <span class="badge" matTooltip="Items matching no keyword land here">Default</span> }
+                  @if (isBuiltIn(row.category.id)) {
+                    <span class="badge" matTooltip="Used by the AI. You can rename it and edit keywords, but not delete it.">AI</span>
+                  }
                 </div>
                 <div class="keywords">
                   @for (k of row.category.keywords.slice(0, preview); track k) {
@@ -80,7 +84,7 @@ const PREVIEW = 14;
                     <span class="more">+{{ row.category.keywords.length - preview }} more</span>
                   }
                   @if (row.category.keywords.length === 0) {
-                    <span class="none">{{ row.index === 0 ? 'No keywords needed — catches everything else' : 'No keywords yet' }}</span>
+                    <span class="none">{{ row.category.id === 'uncategorized' ? 'No keywords needed: items wait here until the AI places them' : 'No keywords yet (the AI still places items here)' }}</span>
                   }
                 </div>
               </div>
@@ -94,9 +98,8 @@ const PREVIEW = 14;
                   <mat-icon>more_vert</mat-icon></button>
                 <mat-menu #menu="matMenu">
                   <button mat-menu-item (click)="openForm(row.category)"><mat-icon>edit</mat-icon> Edit</button>
-                  <button mat-menu-item [disabled]="row.index === 0" (click)="state.makeDefault(row.category.id)">
-                    <mat-icon>star_outline</mat-icon> Make default</button>
-                  <button mat-menu-item [disabled]="state.categories().length <= 1" (click)="confirmDelete(row.category, row.index)">
+                  <button mat-menu-item [disabled]="isBuiltIn(row.category.id) || state.categories().length <= 1"
+                          (click)="confirmDelete(row.category)">
                     <mat-icon>delete_outline</mat-icon> Delete</button>
                 </mat-menu>
               </div>
@@ -143,6 +146,7 @@ export class CategoriesListPage {
   protected readonly state = inject(CategoriesStore);
   private readonly dialog = inject(MatDialog);
   protected readonly preview = PREVIEW;
+  protected readonly isBuiltIn = isBuiltIn;
 
   protected atLimit(): boolean {
     return this.state.categories().length >= MAX_CATEGORIES;
@@ -156,15 +160,13 @@ export class CategoriesListPage {
     });
   }
 
-  protected confirmDelete(category: ItemCategory, index: number): void {
-    const next = this.state.categories()[index === 0 ? 1 : 0];
+  protected confirmDelete(category: ItemCategory): void {
     this.dialog
       .open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
         data: {
           title: `Delete ${category.name}?`,
           message:
-            'New items will no longer be tagged with it. Receipts already tagged keep the old ID.' +
-            (index === 0 && next ? ` ${next.name} becomes the default.` : ''),
+            'New items will no longer be tagged with it. Receipts already tagged keep the old ID.',
           confirmLabel: 'Delete',
           destructive: true,
         },

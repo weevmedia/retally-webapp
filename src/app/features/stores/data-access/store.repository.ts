@@ -74,10 +74,12 @@ export class FirestoreStoreRepository extends StoreRepository {
     if (!LOGO_TYPES.includes(file.type)) throw new AppError('Logo must be PNG, JPEG, WebP or SVG.', 'invalid-file');
     if (file.size > MAX_LOGO_BYTES) throw new AppError('Logo must be under 1 MB.', 'invalid-file');
     const ext = file.type === 'image/svg+xml' ? 'svg' : file.type.split('/')[1].replace('jpeg', 'jpg');
-    // Path the mobile app's set-up notes already use: store-icons/<key>.<ext>
-    const objectRef = ref(this.storage, `store-icons/${key}.${ext}`);
+    // A new file name per upload (store-icons/<key>-<timestamp>.<ext>), so a replaced logo gets
+    // a new URL. Apps and browsers cache logo images by URL; overwriting the same file could
+    // keep serving the old picture. Each file then never changes, so it can be cached for good.
+    const objectRef = ref(this.storage, `store-icons/${key}-${Date.now()}.${ext}`);
     try {
-      await uploadBytes(objectRef, file, { contentType: file.type, cacheControl: 'public,max-age=86400' });
+      await uploadBytes(objectRef, file, { contentType: file.type, cacheControl: 'public,max-age=31536000,immutable' });
       return await getDownloadURL(objectRef);
     } catch (e) {
       throw AppError.from(e);
@@ -93,6 +95,7 @@ function toStore(key: string, data: Record<string, unknown>): Store {
     key,
     name: typeof data['name'] === 'string' ? data['name'] : key,
     iconUrl: typeof data['iconUrl'] === 'string' ? data['iconUrl'] : '',
+    weeklyAdUrl: typeof data['weeklyAdUrl'] === 'string' ? data['weeklyAdUrl'] : '',
     aliases: Array.isArray(data['aliases']) ? data['aliases'].filter((a): a is string => typeof a === 'string') : [],
     category: typeof data['category'] === 'string' ? (data['category'] as StoreCategory) : null,
     status: data['status'] === 'new' ? 'new' : 'active',
